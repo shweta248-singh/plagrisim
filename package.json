@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "express-mongo-sanitize": "^2.2.0",
+    "natural": "^8.1.1"
+  }
+}
