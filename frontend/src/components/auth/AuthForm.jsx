@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import Input from '../common/Input';
@@ -6,6 +6,11 @@ import Button from '../common/Button';
 
 const AuthForm = ({ initialMode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
+  
+  useEffect(() => {
+    setIsLogin(initialMode === 'login');
+  }, [initialMode]);
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -72,17 +77,19 @@ const AuthForm = ({ initialMode = 'login' }) => {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrors({ submit: data.message || "Authentication failed" });
+        if (res.status === 409) {
+          setErrors({ submit: "User already exists. Please login." });
+        } else {
+          setErrors({ submit: data.message || "Authentication failed" });
+        }
         return;
       }
 
-      const responseData = data; // IMPORTANT: do NOT use data.data
-
-      console.log("LOGIN RESPONSE:", responseData);
+      const responseData = data;
 
       // Validate token
       if (!responseData?.accessToken) {
-        console.error("❌ Token missing in response");
+        setErrors({ submit: "Token missing in response" });
         return;
       }
 
@@ -98,13 +105,9 @@ const AuthForm = ({ initialMode = 'login' }) => {
       localStorage.setItem("proofnexa_auth", JSON.stringify(authPayload));
       localStorage.setItem("proofnexa_user", JSON.stringify(responseData.user));
 
-      // Debug log
-      console.log("STORED AUTH:", localStorage.getItem("proofnexa_auth"));
-
       // Navigate AFTER storing
       navigate("/dashboard");
     } catch (err) {
-      console.error("Auth error:", err);
       setErrors({ submit: "Connection to server failed. Make sure backend is running." });
     }
   };
@@ -210,11 +213,10 @@ const AuthForm = ({ initialMode = 'login' }) => {
         </Button>
       </form>
 
-
-
       <p className="mt-8 text-center text-sm text-slate-400">
         {isLogin ? "Don't have an account? " : "Already have an account? "}
         <button 
+          type="button"
           onClick={() => setIsLogin(!isLogin)} 
           className="font-medium text-brand-purple hover:text-brand-light"
         >
@@ -226,3 +228,4 @@ const AuthForm = ({ initialMode = 'login' }) => {
 };
 
 export default AuthForm;
+
