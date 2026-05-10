@@ -60,8 +60,9 @@ const performAnalysis = async ({
     try {
       const axios = require("axios");
       const aiEngineUrl = process.env.AI_ENGINE_URL || "http://127.0.0.1:8000";
+      const nlpTimeout = parseInt(process.env.NLP_API_TIMEOUT) || 60000;
       
-      console.log("NLP REQUEST STARTED to:", `${aiEngineUrl}/analyze-text`);
+      console.log("NLP REQUEST STARTED to:", `${aiEngineUrl}/analyze-text`, "with timeout:", nlpTimeout);
       
       const aiResponse = await axios.post(
         `${aiEngineUrl}/analyze-text`,
@@ -69,17 +70,20 @@ const performAnalysis = async ({
           text, 
           submissionId: submission._id.toString() 
         },
-        { timeout: 30000 }
+        { timeout: nlpTimeout }
       );
       
       nlpResult = aiResponse.data;
       console.log("NLP RESPONSE RECEIVED");
     } catch (nlpError) {
       console.error("[ANALYSIS SERVICE] NLP Engine call failed:", nlpError.message);
+      if (nlpError.response) {
+        console.error("NLP Engine Response Data:", nlpError.response.data);
+      }
       submission.status = "failed";
       submission.errorMessage = nlpError.message;
       await submission.save();
-      throw new Error("NLP engine is not responding. Please start FastAPI service.");
+      throw new Error(`NLP engine is not responding (${nlpError.message}). Please ensure FastAPI service is running.`);
     }
 
     const similarity = nlpResult.similarity ?? nlpResult.similarityScore ?? 0;

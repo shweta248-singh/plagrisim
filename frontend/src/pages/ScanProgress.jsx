@@ -90,7 +90,7 @@ const ScanProgress = () => {
             response = await api.post("/analyze/text", {
               text: scanText,
             }, {
-              timeout: 30000,
+              timeout: 120000, // Increased timeout for cold starts
             });
             console.log("TEXT API RESPONSE:", response.data);
           } catch (e) {
@@ -114,7 +114,7 @@ const ScanProgress = () => {
                 if (!cancelled) setProgress(p);
               }
             },
-            timeout: 30000,
+            timeout: 120000, // Increased timeout for cold starts
           });
 
           // Simulate step transition while uploading/processing
